@@ -1,6 +1,6 @@
 #-*- coding: utf-8 -*-
 u'''
-TEST1: Test classes declaration with empty double lines
+TEST2: Test classes declaration with empty double lines
 '''
 __author__ = "Pablo Enfedaque"
 __email__ = "pablito56@gmail.com"
@@ -25,11 +25,11 @@ class MyPrintClass(object):
 
     def print_inst(self):
         self.print_count += 1
-        print self
-        print repr(self)
+        print(self)
+        print(repr(self))
 
 
 
 inst = MyPrintClass()
-print inst
+print(inst)
 inst.print_inst()

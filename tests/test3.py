@@ -15,6 +15,6 @@ class DemoClass(object):
 
 inst = DemoClass(3)
 
-print inst.power_attr(2)
-print inst.power_attr(3)
-print inst.power_attr(4)
+print(inst.power_attr(2))
+print(inst.power_attr(3))
+print(inst.power_attr(4))

@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #-*- coding: utf-8 -*-
-u"""
+"""
 Created on Nov 13, 2012
 
 @author: pablito56
@@ -15,10 +15,10 @@ Pydemo main module
 
 __author__ = "Pablo Enfedaque"
 __email__ = "pablito56@gmail.com"
-__version__ = "0.0.4"
+__version__ = "0.1.0"
 __license__ = "MIT"
 __date__ = "2012-11-13"
-__updated__ = "2013-04-21"
+__updated__ = "2016-08-29"
 
 
 # Std lib imports
@@ -26,24 +26,25 @@ from sys import argv, path as syspath
 from os import path, listdir
 import code
 import atexit
-from optparse import OptionParser
+from argparse import ArgumentParser
 
 
-FORMATTER_STYLE = 'emacs'
+FORMATTER_STYLE = "emacs"
 #===============================================================================
 # TO GET ALL THE AVAILABLE PIGMENTS STYLES:
-# python -c "from pygments.styles import get_all_styles; print list(get_all_styles())"
+# python -c "from pygments.styles import get_all_styles; print(list(get_all_styles()))"
 #===============================================================================
-RELOAD_FILES_CMD = 'reload_files'
-PRINT_FILES_CMD = 'print_files'
+RELOAD_FILES_CMD = "reload_files"
+PRINT_FILES_CMD = "print_files"
 HELP_CMD = "help"
 BLANKS = 1
 
 
 class HistoryConsole(code.InteractiveConsole, object):
-    '''Add history support to code.InteractiveConsole like done in
+    """Add history support to code.InteractiveConsole like done in
     http://docs.python.org/2/library/readline.html?highlight=readline#example
-    '''
+    """
+
     def __init__(self, histfile=path.expanduser("~/.pydemo_history"), *args, **kargs):
         super(HistoryConsole, self).__init__(*args, **kargs)
         self.init_history(histfile)
@@ -76,8 +77,7 @@ class DemoConsole(code.InteractiveConsole, object):
         super(DemoConsole, self).__init__(*args, **kargs)
 
     def clean_block_trail(self, block):
-        '''Remove last empty as well as last break line of given code block
-        '''
+        """Remove last empty as well as last break line of given code block"""
         while True:
             if not block[-1].strip():
                 block.pop(-1)
@@ -87,10 +87,10 @@ class DemoConsole(code.InteractiveConsole, object):
         return block
 
     def get_code_blocks(self):
-        '''Retrieve a list of code blocks; lists of strings containing lines of code
+        """Retrieve a list of code blocks; lists of strings containing lines of code
         :param files: list of files to read
-        :return list of lists of single line strings
-        '''
+        :returns list of lists of single line strings
+        """
         blocks = []
         files_count = 0
         for index, fil in enumerate(self.files):
@@ -138,7 +138,7 @@ class DemoConsole(code.InteractiveConsole, object):
             # Accumulate next code blocks until they are executable (and execute them)
             while True:
                 try:
-                    b = self.blocks_iter.next()
+                    b = next(self.blocks_iter)
                 except StopIteration:
                     if self.code_block:
                         b = []
@@ -166,40 +166,44 @@ class DemoConsole(code.InteractiveConsole, object):
                                                       Terminal256Formatter(style=FORMATTER_STYLE))
                         except ImportError:
                             pass
-                    print code_to_print
-                    map(super(DemoConsole, self).push,
-                        [line[:-1] if line[-1] == "\n" else line for line in self.code_block if line != '\n'])
+                    print(code_to_print)
+                    # push() code to console for execution
+                    for line in self.code_block:
+                        if line != "\n":
+                            line = line[:-1] if line[-1] == "\n" else line
+                            super(DemoConsole, self).push(line)
                     super(DemoConsole, self).push("\n")
+
                     self.code_block = b
                     self.is_executable = True
                     return False
                 if self.code_block:
-                    self.code_block.extend(['\n'] * self.blanks)
+                    self.code_block.extend(["\n"] * self.blanks)
                 self.code_block.extend(b)
                 try:
                     self.is_executable = code.compile_command("".join(self.code_block), "<stdin>", "exec") is not None
-                except Exception, e:
+                except:
                     import traceback
-                    print "EXCEPTION WHILE TRYING TO COMPILE:"
-                    print "".join(self.code_block)
-                    print traceback.format_exc()
+                    print("EXCEPTION WHILE TRYING TO COMPILE:")
+                    print("".join(self.code_block))
+                    print(traceback.format_exc())
             return False
-        elif line.strip().startswith('%' + RELOAD_FILES_CMD) and len(self.buffer) == 0:
+        elif line.strip().startswith("%" + RELOAD_FILES_CMD) and len(self.buffer) == 0:
             self.reload_files(line.strip().split(" ")[1:])
             return False
-        elif line.strip().startswith('%' + PRINT_FILES_CMD) and len(self.buffer) == 0:
+        elif line.strip().startswith("%" + PRINT_FILES_CMD) and len(self.buffer) == 0:
             self.print_loaded_resume()
             msg = "In strict order:\n    {0}\n".format("\n    ".join(self.files))
             self.write(msg)
             return False
-        elif line.strip().startswith('%' + HELP_CMD) and len(self.buffer) == 0:
+        elif line.strip().startswith("%" + HELP_CMD) and len(self.buffer) == 0:
             self.write(self.get_help())
             return False
         return super(DemoConsole, self).push(line)
 
     def get_help(self):
-        '''Return a string with a help message
-        '''
+        """Return a string with a help message"""
+
         help_txt = "pydemo ({}) help:\n\n".format(self.__class__.__name__)
         help_txt += "    %{:<24} => Reload files. You must provide full or relative path. \
 The extension '.py' is optional.\n\n".format(RELOAD_FILES_CMD + " [FILENAMES]")
@@ -213,8 +217,7 @@ class DemoHistoryConsole(HistoryConsole, DemoConsole):
 
 
 def demo_console(files, blanks, hist, color):
-    '''Launch the demo console infinite input loop
-    '''
+    """Launch the demo console infinite input loop"""
     console = None
     if hist:
         try:
@@ -228,36 +231,40 @@ def demo_console(files, blanks, hist, color):
 
 
 def parse_args(in_argv=argv):
-    '''pydemo command line arguments parsing function
+    """pydemo command line arguments parsing function
     :param in_argv: incoming argv tuple to be parsed
     :return tuple with all decoded arguments
-    '''
-    usage = '''USAGE: %prog [--no-history] [--no-color] [--blanks NUM] [FILES]'''
+    """
+    prog = "pydemo"
+    usage = "USAGE: {prog} [--no-history] [--no-color] [--blanks NUM] [FILES]".format(prog=prog)
+    desc = "Frappe Context Processor Backend process"
 
-    desc = '''Frappe Context Processor Backend process'''
+    parser = ArgumentParser(usage=usage, description=desc, prog=prog)
 
-    parser = OptionParser(usage=usage, version="%prog v0.0.1",
-                          description=desc, prog='pydemo')
+    parser.add_argument("files", metavar="FILES", nargs="*",
+                        help="Files to read. Defaults to all files in the current directory.")
 
-    parser.add_option('--blanks', dest='blanks', metavar='NUM',
-                      help='Number of blank lines between each code block',
-                      type='int', default=BLANKS)
+    parser.add_argument("--blanks", metavar="NUM",
+                        help="Number of blank lines between each code block",
+                        type=int, default=BLANKS)
 
-    parser.add_option('--no-history', dest='hist',
-                      help='Do not use or store history',
-                      action="store_false", default=True)
-    parser.add_option('--no-color', dest='color',
-                      help='Do not use colorful output',
-                      action="store_false", default=True)
+    parser.add_argument("--no-history", dest="hist",
+                        help="Do not use or store history",
+                        action="store_false", default=True)
+    parser.add_argument("--no-color", dest="color",
+                        help="Do not use colorful output",
+                        action="store_false", default=True)
 
-    (opts, args) = parser.parse_args(in_argv)
-    return opts.blanks, opts.hist, opts.color, args[1:]
+    return parser.parse_args()
 
 
 def main():
-    blanks, hist, color, files = parse_args(argv)
-    demo_console(files, blanks, hist, color)
+    args = parse_args(argv)
+    ###
+    print(args)
+    demo_console(args.files, args.blanks, args.hist, args.color)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
+    print("%(test)" % dict(test="alabala"))

@@ -23,4 +23,4 @@ class MyClass(object):
 
 
 inst = MyClass()
-print inst
+print(inst)
